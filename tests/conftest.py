@@ -113,31 +113,23 @@ def setup_and_teardown(request):
 
 @pytest.fixture()
 def log_on_failure(request):
-    """Automatically captures an Allure screenshot if the test fails."""
+    """
+    Lightweight fixture marker for tests using @pytest.mark.usefixtures("log_on_failure").
+    Screenshot attachment is centrally handled by pytest_runtest_makereport hook to avoid duplicates.
+    """
     yield
-    item = request.node
-    # Check if the call phase failed
-    if hasattr(item, "rep_call") and item.rep_call.failed:
-        # Retrieve the driver instance attached to the test class
-        driver = getattr(request.cls, "driver", None)
-        if driver:
-            allure.attach(
-                driver.get_screenshot_as_png(),
-                name="failed_test_screenshot",
-                attachment_type=AttachmentType.PNG
-            )
 
 
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_runtest_makereport(item, call):
     """
     Hook to capture test results and attach screenshots to BOTH
-    Allure and pytest-html reports on test failures.
+    Allure and pytest-html reports on test failures cleanly without duplication.
     """
     outcome = yield
     report = outcome.get_result()
 
-    # Store report on item for fixture access
+    # Store report status on item for fixture/logging access
     setattr(item, "rep_" + report.when, report)
     extras_list = getattr(report, "extras", [])
 
