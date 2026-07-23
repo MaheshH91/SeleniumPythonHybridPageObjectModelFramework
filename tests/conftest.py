@@ -49,27 +49,40 @@ def _init_driver(request):
         options = Options()
         if is_headless:
             options.add_argument("--headless=new")
-        # options.add_argument("--window-size=1920,1080")
-        options.add_argument("--start-maximized")
+            options.add_argument("--window-size=1920,1080")  # Force desktop viewport in headless
+            options.add_argument("--no-sandbox")             # Essential for Jenkins CI execution
+            options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
+        else:
+            options.add_argument("--start-maximized")
+
         driver = webdriver.Chrome(options=options)
 
     elif browser == "edge":
         options = EdgeOptions()
         if is_headless:
             options.add_argument("--headless=new")
-        # options.add_argument("--window-size=1920,1080")
+            options.add_argument("--window-size=1920,1080")
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-dev-shm-usage")
+        else:
+            options.add_argument("--start-maximized")
+
         driver = webdriver.Edge(options=options)
 
     elif browser == "firefox":
         options = FirefoxOptions()
         if is_headless:
             options.add_argument("-headless")
-        # options.add_argument("--width=1920")
-        # options.add_argument("--height=1080")
+            options.add_argument("--width=1920")
+            options.add_argument("--height=1080")
+
         driver = webdriver.Firefox(options=options)
 
     else:
         raise ValueError(f"Unsupported browser: '{browser}'. Choose from: chrome, edge, firefox")
+
+    if not is_headless:
+        driver.maximize_window()
 
     # Load starting application URL from config.ini
     app_url = read_configuration("basic info", "url")
